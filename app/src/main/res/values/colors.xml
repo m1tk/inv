@@ -8,8 +8,11 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+    <color name="main_background" >@color/white</color>
     <color name="title">@color/black</color>
     <color name="video_length">@color/white</color>
     <color name="video_length_background">#bf232323</color>
     <color name="video_player_background">@color/black</color>
+    <color name="min_player_color">@color/black</color>
+    <color name="progress_wheel">@color/black</color>
 </resources>

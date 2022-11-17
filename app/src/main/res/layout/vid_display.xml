@@ -15,6 +15,7 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
             android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
             android:clickable="true"
             android:src="@drawable/video_thumbnail"/>
         <TextView

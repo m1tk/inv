@@ -9,8 +9,11 @@ import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.jackson.JacksonConverterFactory
 import retrofit2.http.GET
+import retrofit2.http.Path
+import retrofit2.http.Query
 import retrofit2.http.Url
 import java.util.Arrays
+import java.util.concurrent.TimeUnit
 
 
 data class Thumbnail(
@@ -28,6 +31,15 @@ data class Video(
     @JsonProperty("videoThumbnails") val img_prev: List<Thumbnail>,
 )
 
+data class VideoSource(
+    @JsonProperty("url") val url: String,
+    @JsonProperty("resolution") val resolution: String,
+)
+
+data class VideoInfo(
+    @JsonProperty("formatStreams") val streams: List<VideoSource>,
+)
+
 interface Api {
     @GET("/api/v1/popular?fields=title,videoId,lengthSeconds,viewCount,videoThumbnails,publishedText,author")
     fun get_popular() : Call<List<Video>>
@@ -35,8 +47,12 @@ interface Api {
     @GET("/api/v1/trending?fields=title,videoId,lengthSeconds,viewCount,videoThumbnails,publishedText,author")
     fun get_trending() : Call<List<Video>>
 
-    @GET
-    fun get_img(@Url url: String) : Call<ResponseBody>
+    @GET("/api/v1/search/?fields=title,videoId,lengthSeconds,viewCount,videoThumbnails,publishedText,author")
+    fun get_search(@Query("q") query: String) : Call<List<Video>>
+
+    @GET("/api/v1/videos/{video_id}?fields=formatStreams")
+    fun get_video(@Path("video_id") video_id: String) : Call<VideoInfo>
+
 }
 
 class ClientBuilder {
@@ -45,17 +61,18 @@ class ClientBuilder {
     }
 
     fun get_client() : Api {
-        val intercept = object : Interceptor {
-            override fun intercept(chain: Interceptor.Chain): Response {
-                val request = chain.request()
-                println("Outgoing request to ${request.url()}")
-                return chain.proceed(request)
-            }
+        val intercept = Interceptor { chain ->
+            val request = chain.request()
+            println("Outgoing request to ${request.url()}")
+            chain.proceed(request)
         }
 
         val okHttpClient = OkHttpClient()
             .newBuilder()
-            .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
             .addInterceptor(intercept)
             .build()
 
