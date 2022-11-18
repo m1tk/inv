@@ -2,6 +2,7 @@ package com.x.invid
 
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -11,6 +12,7 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player.Listener
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.x.invid.MainActivity.Companion.client
+import com.x.invid.api.VideoInfo
 import kotlinx.android.synthetic.main.player_controllers.*
 import kotlinx.android.synthetic.main.video_player.view.*
 import retrofit2.Response
@@ -26,6 +28,10 @@ class VideoPlayer : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.video_player)
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            fullscreen()
+        }
 
         if (intent.extras?.getString("id")!! != "") {
             exoPlayer = SimpleExoPlayer.Builder(this)
@@ -50,31 +56,7 @@ class VideoPlayer : AppCompatActivity() {
     private fun set_listeners() {
         // Setting fullscreen
         imageViewFullScreen.setOnClickListener {
-            if (!isFullScreen) {
-                imageViewFullScreen.setImageDrawable(
-                    ContextCompat.getDrawable(
-                        applicationContext,
-                        com.google.android.exoplayer2.R.drawable.exo_icon_fullscreen_exit
-                    )
-                )
-                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
-            } else {
-                imageViewFullScreen.setImageDrawable(
-                    ContextCompat.getDrawable(
-                        applicationContext,
-                        R.drawable.ic_fullscreen_open
-                    )
-                )
-                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR)
-            }
-            isFullScreen = !isFullScreen
+            fullscreen()
         }
         // Setting screenlock
         imageViewLock.setOnClickListener {
@@ -85,6 +67,11 @@ class VideoPlayer : AppCompatActivity() {
                         R.drawable.ic_baseline_lock
                     )
                 )
+                if (resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                } else {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                }
             } else {
                 imageViewLock.setImageDrawable(
                     ContextCompat.getDrawable(
@@ -92,6 +79,7 @@ class VideoPlayer : AppCompatActivity() {
                         R.drawable.ic_baseline_lock_open
                     )
                 )
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             }
             isLock = !isLock
             if (isLock) {
@@ -100,6 +88,46 @@ class VideoPlayer : AppCompatActivity() {
             } else {
                 linearLayoutControlUp.visibility = View.VISIBLE
                 linearLayoutControlBottom.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    fun fullscreen() {
+        if (!isFullScreen) {
+            imageViewFullScreen.setImageDrawable(
+                ContextCompat.getDrawable(
+                    applicationContext,
+                    com.google.android.exoplayer2.R.drawable.exo_icon_fullscreen_exit
+                )
+            )
+
+            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+        } else {
+            imageViewFullScreen.setImageDrawable(
+                ContextCompat.getDrawable(
+                    applicationContext,
+                    R.drawable.ic_fullscreen_open
+                )
+            )
+
+            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR)
+        }
+        isFullScreen = !isFullScreen
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Auto rotate when screen is rotated
+        if (!isLock) {
+            if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                fullscreen()
+            } else {
+                fullscreen()
             }
         }
     }
@@ -140,6 +168,8 @@ class VideoPlayer : AppCompatActivity() {
                     exoPlayer?.addMediaItem(mediaItem)
                     exoPlayer?.prepare()
                     exoPlayer?.setPlayWhenReady(true)
+                } ?: run {
+                    on_fetch_stream_error()
                 }
             }
         }).start()

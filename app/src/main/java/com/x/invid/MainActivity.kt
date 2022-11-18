@@ -2,6 +2,7 @@ package com.x.invid
 
 import android.app.Dialog
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import android.view.Window
@@ -16,12 +17,26 @@ import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.video_player.view.*
 import retrofit2.Response
-
+import com.x.invid.api.ClientBuilder
+import com.x.invid.api.Video
+import com.x.invid.adapter.VidHolder
+import com.x.invid.adapter.VidRecycler
+import com.x.invid.model.VidData
 
 class MainActivity : AppCompatActivity() {
     companion object {
         var client = ClientBuilder()
             .get_client()
+
+        // Remember objects of views
+        var cur_popular: Pair<ArrayList<VidData>, API_ERROR>?  = null
+        var cur_trending: Pair<ArrayList<VidData>, API_ERROR>? = null
+
+        // Remember last video
+        var cur_playing: VidInfo? = null
+
+        // Remember last view
+        var cur_view: ViewSection? = null
     }
 
     enum class Section {
@@ -45,9 +60,6 @@ class MainActivity : AppCompatActivity() {
         val title: String,
         val id: String
     )
-
-    var cur_playing: VidInfo? = null
-    var cur_view: ViewSection? = null
 
     val vid_click: ((VidHolder?) -> Unit) = { id_val ->
         var id = id_val?.let {
@@ -79,6 +91,10 @@ class MainActivity : AppCompatActivity() {
         if (requestCode != 1) {
             return
         }
+        minimized_video_playback()
+    }
+
+    private fun minimized_video_playback() {
         var playerView = findViewById<View>(R.id.video_player)
         playerView.video_player.player = VideoPlayer.exoPlayer
         change_play_status(VideoPlayer.exoPlayer?.isPlaying!!)
@@ -140,7 +156,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update_section_view(section: Section) {
-        val ret = update_view(section)
+        val ret = when (section) {
+            Section.POPULAR -> cur_popular?.let {
+                cur_popular!!
+            } ?:run {
+                cur_popular = update_view(section)
+                cur_popular!!
+            }
+            Section.TRENDING -> cur_trending?.let {
+                cur_trending!!
+            } ?:run {
+                cur_trending = update_view(section)
+                cur_trending!!
+            }
+            Section.SEARCH -> update_view(section)
+        }
 
         val adapter = VidRecycler(ret.first, application, vid_click)
         runOnUiThread {
@@ -256,7 +286,13 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 set_hooks()
                 dialog.dismiss()
+                cur_playing?.let { minimized_video_playback() }
             }
         }).start()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        setContentView(R.layout.activity_main)
     }
 }

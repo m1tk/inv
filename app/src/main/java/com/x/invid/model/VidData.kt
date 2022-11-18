@@ -1,6 +1,4 @@
-package com.x.invid
-
-import android.graphics.Bitmap
+package com.x.invid.model
 
 class VidData(val img_prev: String, val title: String, val creator: String,
               views_num: Long, val date: String, val len_secs: Long, val id: String) {

@@ -1,4 +1,4 @@
-package com.x.invid
+package com.x.invid.adapter
 
 import android.content.Context
 import android.text.format.DateUtils
@@ -7,6 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.x.invid.R
+import com.x.invid.model.VidData
 
 class VidRecycler(private val list: List<VidData>, private val ctx: Context,
                   private val callback: (holder: VidHolder) -> Unit) : RecyclerView.Adapter<VidHolder>() {

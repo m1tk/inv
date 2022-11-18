@@ -1,9 +1,10 @@
-package com.x.invid
+package com.x.invid.adapter
 
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.x.invid.R
 
 class VidHolder(item: View) : RecyclerView.ViewHolder(item) {
     var img_prev: ImageView

@@ -1,6 +1,5 @@
-package com.x.invid
+package com.x.invid.api
 
-import android.graphics.Bitmap
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -11,8 +10,6 @@ import retrofit2.converter.jackson.JacksonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
-import retrofit2.http.Url
-import java.util.Arrays
 import java.util.concurrent.TimeUnit
 
 
@@ -64,7 +61,9 @@ class ClientBuilder {
         val intercept = Interceptor { chain ->
             val request = chain.request()
             println("Outgoing request to ${request.url()}")
-            chain.proceed(request)
+            val resp = chain.proceed(request)
+            println("Outgoing response status ${resp.code()}")
+            resp
         }
 
         val okHttpClient = OkHttpClient()
