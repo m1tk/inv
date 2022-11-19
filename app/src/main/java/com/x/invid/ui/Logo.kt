@@ -1,7 +1,8 @@
-package com.x.invid
+package com.x.invid.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.x.invid.R
 
 class Logo : AppCompatActivity() {
 

@@ -1,6 +1,5 @@
-package com.x.invid
+package com.x.invid.ui
 
-import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
@@ -12,6 +11,7 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player.Listener
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.x.invid.MainActivity.Companion.client
+import com.x.invid.R
 import com.x.invid.api.VideoInfo
 import kotlinx.android.synthetic.main.player_controllers.*
 import kotlinx.android.synthetic.main.video_player.view.*

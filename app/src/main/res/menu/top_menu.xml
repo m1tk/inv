@@ -4,13 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity">
     <item
-        android:id="@+id/action_search"
+        android:id="@+id/action_settings"
         app:showAsAction="ifRoom"
         android:icon="@drawable/ic_baseline_settings_24"
         android:title="Settings" />
     <item
-        android:id="@+id/action_settings"
-        app:showAsAction="ifRoom"
+        android:id="@+id/action_search"
+        app:showAsAction="ifRoom|collapseActionView"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        android:searchSuggestAuthority="com.x.invid_search_history"
+        android:searchSuggestSelection=" ?"
         android:icon="@drawable/ic_baseline_search_24"
         android:title="Search" />
 </menu>

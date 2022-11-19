@@ -14,8 +14,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Invid"
         tools:targetApi="31">
-        <activity android:name=".Logo" />
-        <activity android:name=".VideoPlayer"
+        <provider android:name=".model.SearchSuggestHistory"
+            android:authorities="com.x.invid_search_history"
+            android:enabled="true"/>
+        <activity android:name=".ui.Settings" />
+        <activity android:name=".ui.Logo" />
+        <activity android:name=".ui.VideoPlayer"
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize"

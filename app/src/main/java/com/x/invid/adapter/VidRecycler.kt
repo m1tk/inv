@@ -54,5 +54,4 @@ class VidRecycler(private val list: List<VidData>, private val ctx: Context,
     override fun getItemCount(): Int {
         return list.size
     }
-
 }

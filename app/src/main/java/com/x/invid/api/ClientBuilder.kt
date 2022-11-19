@@ -44,7 +44,7 @@ interface Api {
     @GET("/api/v1/trending?fields=title,videoId,lengthSeconds,viewCount,videoThumbnails,publishedText,author")
     fun get_trending() : Call<List<Video>>
 
-    @GET("/api/v1/search/?fields=title,videoId,lengthSeconds,viewCount,videoThumbnails,publishedText,author")
+    @GET("/api/v1/search/?fields=title,videoId,lengthSeconds,viewCount,videoThumbnails,publishedText,author&type=video")
     fun get_search(@Query("q") query: String) : Call<List<Video>>
 
     @GET("/api/v1/videos/{video_id}?fields=formatStreams")
