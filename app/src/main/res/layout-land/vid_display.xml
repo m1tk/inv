@@ -13,10 +13,8 @@
         app:layout_constraintLeft_toLeftOf="parent"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        app:layout_constraintWidth_percent=".30"
-        app:layout_constraintWidth_default="percent"
-        app:layout_constraintHeight_percent=".45"
-        app:layout_constraintHeight_default="percent">
+        app:layout_constraintWidth_percent=".20"
+        app:layout_constraintWidth_default="percent">
         <ImageView
             android:id="@+id/vid_image"
             android:layout_width="wrap_content"

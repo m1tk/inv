@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-
-    <SwitchPreferenceCompat
-        app:key="dark_mode"
-        app:title="Dark mode"/>
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.x.invid.ui.Settings">
+    
 
 </PreferenceScreen>

@@ -4,6 +4,8 @@ import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
+import android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+import android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -92,8 +94,9 @@ class VideoPlayer : AppCompatActivity() {
         }
     }
 
-    fun fullscreen() {
-        if (!isFullScreen) {
+    fun fullscreen(orientation: Boolean = false, type: Int = 0) {
+        if ((orientation && type == Configuration.ORIENTATION_LANDSCAPE)
+            || (!orientation && !isFullScreen)) {
             imageViewFullScreen.setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
@@ -102,12 +105,12 @@ class VideoPlayer : AppCompatActivity() {
             )
 
             window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
-        } else {
+        } else if ((orientation && type == Configuration.ORIENTATION_PORTRAIT)
+            || (!orientation && isFullScreen)) {
             imageViewFullScreen.setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
@@ -115,20 +118,23 @@ class VideoPlayer : AppCompatActivity() {
                 )
             )
 
-            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR)
+            println("woooooooo fuuuuuu")
+            window.decorView.systemUiVisibility = (SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
         }
-        isFullScreen = !isFullScreen
+        if (!orientation) {
+            isFullScreen = !isFullScreen
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         // Auto rotate when screen is rotated
         if (!isLock) {
-            if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                fullscreen()
-            } else {
-                fullscreen()
-            }
+            println("woooooooo fuuuuuucallllllllaa")
+            fullscreen(true, newConfig.orientation)
         }
     }
 

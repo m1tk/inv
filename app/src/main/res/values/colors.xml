@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
+    <color name="purple_200">#1DA1F2</color>
+    <color name="purple_500">#1DA1F2</color>
+    <color name="purple_700">#4BB5F6</color>
+    <color name="teal_200">#00B2FF</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
+    <color name="ExtraExtraLightGray">#F5F8FA</color>
+    <color name="Blue">#1DA1F2</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="main_background" >@color/white</color>
+    <color name="main_background" >@color/ExtraExtraLightGray</color>
     <color name="title">@color/black</color>
-    <color name="video_length">@color/white</color>
+    <color name="video_length">@color/ExtraExtraLightGray</color>
     <color name="video_length_background">#bf232323</color>
     <color name="video_player_background">@color/black</color>
     <color name="min_player_color">@color/black</color>
-    <color name="progress_wheel">@color/black</color>
+    <color name="progress_wheel">@color/Blue</color>
+    <color name="icon_color">@color/white</color>
 </resources>

@@ -1,10 +1,13 @@
 package com.x.invid
 
 import android.app.Dialog
+import android.app.SearchManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
+import android.provider.SearchRecentSuggestions
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -13,9 +16,11 @@ import android.widget.Button
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isEmpty
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
+import androidx.window.layout.WindowMetricsCalculator
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import kotlinx.android.synthetic.main.activity_main.*
@@ -25,7 +30,10 @@ import com.x.invid.api.ClientBuilder
 import com.x.invid.api.Video
 import com.x.invid.adapter.VidHolder
 import com.x.invid.adapter.VidRecycler
+import com.x.invid.model.SearchSuggestHistory
 import com.x.invid.model.VidData
+import com.x.invid.ui.RecycleViewItemDecoration
+import com.x.invid.ui.SettingsActivity
 import com.x.invid.ui.VideoPlayer
 
 class MainActivity : AppCompatActivity() {
@@ -46,6 +54,9 @@ class MainActivity : AppCompatActivity() {
 
         // Simple go back stack
         var back_view: Section? = null
+
+        // Search is active
+        var search: String? = null
     }
 
     enum class Section {
@@ -60,6 +71,11 @@ class MainActivity : AppCompatActivity() {
         ERROR_API
     }
 
+    enum class WindowSizeClass {
+        PHONE,
+        TABLET
+    }
+
     data class ViewSection(
         var view: RecyclerView,
         var section: Section,
@@ -70,6 +86,11 @@ class MainActivity : AppCompatActivity() {
         val title: String,
         val id: String
     )
+
+    // Get device type
+    private lateinit var deviceType: WindowSizeClass
+
+    private var searchItem: MenuItem? = null
 
     val vid_click: ((VidHolder?) -> Unit) = { id_val ->
         var id = id_val?.let {
@@ -224,7 +245,7 @@ class MainActivity : AppCompatActivity() {
 
                     view.visibility    = View.VISIBLE
                     view.adapter       = adapter
-                    view.layoutManager = LinearLayoutManager(this)
+                    set_view_layout(view)
                 }
             }
         }
@@ -235,7 +256,9 @@ class MainActivity : AppCompatActivity() {
         try_again_button.setOnClickListener {
             refresh.isRefreshing = true
             Thread(Runnable {
-                update_section_view(cur_view?.section!!)
+                cur_view?.let {
+                    update_section_view(it.section, true)
+                }
                 runOnUiThread {
                     refresh.isRefreshing = false
                 }
@@ -251,6 +274,12 @@ class MainActivity : AppCompatActivity() {
 
             // Hide error view if there was ever one
             no_internet_main.visibility = View.INVISIBLE
+
+            back_view?.let {
+                back_view = next_view.second
+                searchItem?.collapseActionView()
+                return@setOnItemSelectedListener true
+            }
 
             if (next_view.first.isEmpty()) {
                 // Show progress wheel
@@ -288,11 +317,19 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        bottom_nav_view.setOnItemReselectedListener {
+        bottom_nav_view.setOnItemReselectedListener { item ->
             // Go to top when we reselect current view
-            cur_view?.let {
-                it.view.stopScroll()
-                it.view.layoutManager?.scrollToPosition(0)
+            back_view?.let {
+                back_view = when (item.itemId) {
+                    R.id.nav_popular -> Section.POPULAR
+                    else             -> Section.TRENDING
+                }
+                searchItem?.collapseActionView()
+            } ?:run {
+                cur_view?.let {
+                    it.view.stopScroll()
+                    it.view.layoutManager?.scrollToPosition(0)
+                }
             }
         }
 
@@ -306,6 +343,7 @@ class MainActivity : AppCompatActivity() {
 
         exo_close_min.setOnClickListener {
             VideoPlayer.exoPlayer?.release()
+            cur_playing           = null
             pip_player.visibility = View.INVISIBLE
         }
 
@@ -335,14 +373,31 @@ class MainActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.top_menu, menu)
 
-        val item = menu?.findItem(R.id.action_search);
-        val searchView = item?.actionView as SearchView
+        searchItem          = menu?.findItem(R.id.action_search)
+        var searchView      = searchItem?.actionView as SearchView
+        searchView.maxWidth = Integer.MAX_VALUE;
+
+        // Get the SearchView and set the searchable configuration
+        val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
+        searchView.apply {
+            // Assumes current activity is the searchable activity
+            setSearchableInfo(searchManager.getSearchableInfo(componentName))
+        }
+
+        val suggestionProvider = SearchRecentSuggestions(
+            this,
+            SearchSuggestHistory.AUTHORITY,
+            SearchSuggestHistory.MODE
+        )
 
         // search queryTextChange Listener
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(search: String?): Boolean {
                 search?.let {
                     if (it != "") {
+                        // Save search to history
+                        suggestionProvider.saveRecentQuery(it, null)
+
                         searchView.clearFocus()
                         refresh.isRefreshing = true
                         Thread(Runnable {
@@ -366,13 +421,17 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onQueryTextChange(query: String?): Boolean {
+                if (!query.isNullOrBlank()) {
+                    search = query
+                }
                 return true
             }
         })
 
-        //Expand Collapse listener
-        item.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+        // Expand Collapse listener
+        searchItem?.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
             override fun onMenuItemActionCollapse(p0: MenuItem?): Boolean {
+                search = null
                 go_back()
                 return true
             }
@@ -382,7 +441,27 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        search?.let {
+            searchItem?.expandActionView()
+            searchView.setQuery(it, false)
+        }
+
         return super.onCreateOptionsMenu(menu)
+    }
+
+    fun set_view_layout(view: RecyclerView) {
+        when (deviceType) {
+            WindowSizeClass.PHONE -> view.layoutManager = LinearLayoutManager(this)
+            WindowSizeClass.TABLET -> {
+                if (resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+                    view.layoutManager = GridLayoutManager(this, 2)
+                    view.addItemDecoration(RecycleViewItemDecoration(2, 50, true))
+                } else {
+                    view.layoutManager = GridLayoutManager(this, 3)
+                    view.addItemDecoration(RecycleViewItemDecoration(3, 50, true))
+                }
+            }
+        }
     }
 
     fun go_back() {
@@ -403,8 +482,10 @@ class MainActivity : AppCompatActivity() {
             cur_view?.view?.visibility = View.INVISIBLE
             cur_view = ViewSection(view, back_view!!)
             cur_view?.view?.visibility = View.VISIBLE
+            refresh.isRefreshing = true
             Thread(Runnable {
                 update_section_view(back_view!!)
+                refresh.isRefreshing = false
                 back_view = null
             }).start()
         }
@@ -415,10 +496,8 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.action_search -> {}
             R.id.action_settings -> {
-                /*supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.settings_view, Settings())
-                    .commit()*/
+                val view = Intent(this, SettingsActivity::class.java)
+                startActivity(view)
             }
             else -> {}
         }
@@ -428,6 +507,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        deviceType = computeWindowSizeClasses()
 
         requestedOrientation = if (resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
@@ -463,10 +544,25 @@ class MainActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        setContentView(R.layout.activity_main)
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+            || newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            setContentView(R.layout.activity_main)
+        }
     }
 
     override fun onBackPressed() {
-        go_back()
+        searchItem?.collapseActionView()
+    }
+
+    private fun computeWindowSizeClasses() : WindowSizeClass {
+        val metrics = WindowMetricsCalculator.getOrCreate()
+            .computeCurrentWindowMetrics(this)
+
+        val widthDp = metrics.bounds.width() /
+                resources.displayMetrics.density
+        return when {
+            widthDp < 600f -> WindowSizeClass.PHONE
+            else -> WindowSizeClass.TABLET
+        }
     }
 }
