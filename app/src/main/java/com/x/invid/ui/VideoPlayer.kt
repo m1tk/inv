@@ -13,6 +13,7 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player.Listener
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.x.invid.MainActivity.Companion.client
+import com.x.invid.Preferences
 import com.x.invid.R
 import com.x.invid.api.VideoInfo
 import kotlinx.android.synthetic.main.player_controllers.*
@@ -105,10 +106,15 @@ class VideoPlayer : AppCompatActivity() {
             )
 
             window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+            if (!orientation) {
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
         } else if ((orientation && type == Configuration.ORIENTATION_PORTRAIT)
             || (!orientation && isFullScreen)) {
             imageViewFullScreen.setImageDrawable(
@@ -118,22 +124,20 @@ class VideoPlayer : AppCompatActivity() {
                 )
             )
 
-            println("woooooooo fuuuuuu")
             window.decorView.systemUiVisibility = (SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+            if (!orientation) {
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
         }
-        if (!orientation) {
-            isFullScreen = !isFullScreen
-        }
+        isFullScreen = !isFullScreen
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         // Auto rotate when screen is rotated
         if (!isLock) {
-            println("woooooooo fuuuuuucallllllllaa")
             fullscreen(true, newConfig.orientation)
         }
     }
@@ -162,7 +166,20 @@ class VideoPlayer : AppCompatActivity() {
                         on_fetch_stream_error()
                         return@Runnable
                     }
-                    url = msg.streams[msg.streams.size-1].url
+                    // Looking for our resolution from highest to lowest
+                    for (vid in msg.streams.asReversed()) {
+                        val res = vid.resolution.dropLast(1).toInt()
+                        if (res <= Preferences.video_quality) {
+                            if (res <= Preferences.video_quality) {
+                                url = vid.url
+                                break
+                            }
+                        }
+                    }
+                    // If wanted resolution not found, we pick one
+                    url?:run {
+                        url = msg.streams[msg.streams.size-1].url
+                    }
                 }
             }
 

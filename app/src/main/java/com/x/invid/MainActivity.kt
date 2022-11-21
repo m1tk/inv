@@ -6,15 +6,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.provider.SearchRecentSuggestions
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.Window
+import android.view.WindowManager
 import android.widget.Button
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.doOnLayout
 import androidx.core.view.isEmpty
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -172,12 +175,17 @@ class MainActivity : AppCompatActivity() {
         if (resp.isSuccessful) {
             var msg = resp.body()!!
             for (vid in msg) {
+                var img_thumb: String? = null
                 for (img_prev in vid.img_prev) {
-                    if (img_prev.width == 1280) {
-                        vid_list.add(VidData(img_prev.url, vid.title, vid.author, vid.views, vid.time, vid.len_secs, vid.id))
+                    if (img_prev.width == Preferences.thumnail_res) {
+                        img_thumb = img_prev.url
                         break
                     }
                 }
+                img_thumb?:run {
+                    img_thumb = vid.img_prev[0].url
+                }
+                vid_list.add(VidData(img_thumb!!, vid.title, vid.author, vid.views, vid.time, vid.len_secs, vid.id))
             }
         } else {
             return Pair(vid_list, API_ERROR.ERROR_API)
@@ -445,6 +453,9 @@ class MainActivity : AppCompatActivity() {
             searchItem?.expandActionView()
             searchView.setQuery(it, false)
         }
+        searchView.doOnLayout {
+            searchView.clearFocus()
+        }
 
         return super.onCreateOptionsMenu(menu)
     }
@@ -455,10 +466,14 @@ class MainActivity : AppCompatActivity() {
             WindowSizeClass.TABLET -> {
                 if (resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
                     view.layoutManager = GridLayoutManager(this, 2)
-                    view.addItemDecoration(RecycleViewItemDecoration(2, 50, true))
+                    if (view.itemDecorationCount == 0) {
+                        view.addItemDecoration(RecycleViewItemDecoration(2, 50, true))
+                    }
                 } else {
                     view.layoutManager = GridLayoutManager(this, 3)
-                    view.addItemDecoration(RecycleViewItemDecoration(3, 50, true))
+                    if (view.itemDecorationCount == 0) {
+                        view.addItemDecoration(RecycleViewItemDecoration(3, 50, true))
+                    }
                 }
             }
         }
@@ -508,7 +523,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        if (Build.VERSION.SDK_INT >= 28
+            && resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
+            window.attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
+        }
         deviceType = computeWindowSizeClasses()
+
+        // Preferences
+        Preferences().init(this)
 
         requestedOrientation = if (resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
@@ -558,8 +581,14 @@ class MainActivity : AppCompatActivity() {
         val metrics = WindowMetricsCalculator.getOrCreate()
             .computeCurrentWindowMetrics(this)
 
-        val widthDp = metrics.bounds.width() /
-                resources.displayMetrics.density
+        val widthDp: Float
+        if (resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+            widthDp = metrics.bounds.width() /
+                    resources.displayMetrics.density
+        } else {
+            widthDp = metrics.bounds.height() /
+                    resources.displayMetrics.density
+        }
         return when {
             widthDp < 600f -> WindowSizeClass.PHONE
             else -> WindowSizeClass.TABLET

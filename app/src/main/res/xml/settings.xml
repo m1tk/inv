@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.x.invid.ui.Settings">
-    
+
+    <ListPreference
+        android:entries="@array/video_quality"
+        android:entryValues="@array/video_quality_val"
+        android:key="video_quality"
+        android:summary="Video quality"
+        android:title="Video quality" />
+
+    <ListPreference
+        android:entries="@array/thumbnail_quality"
+        android:entryValues="@array/thumbnail_quality_val"
+        android:key="thumbnail_quality"
+        android:summary="Thumbnail resolution"
+        android:title="Thumbnail resolution" />
 
 </PreferenceScreen>

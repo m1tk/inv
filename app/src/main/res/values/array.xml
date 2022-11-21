@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="thumbnail_quality">
+        <item>1280x720</item>
+        <item>640x480</item>
+        <item>480x360</item>
+    </string-array>
+
+    <string-array name="thumbnail_quality_val">
+        <item>1280</item>
+        <item>640</item>
+        <item>480</item>
+    </string-array>
+
+    <string-array name="video_quality">
+        <item>1080p</item>
+        <item>720p</item>
+        <item>360p</item>
+        <item>144p</item>
+    </string-array>
+
+    <string-array name="video_quality_val">
+        <item>1080</item>
+        <item>720</item>
+        <item>360</item>
+        <item>144</item>
+    </string-array>
+</resources>
